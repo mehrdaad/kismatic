@@ -17,5 +17,5 @@
       mode: "{{ kubernetes_service_mode }}"
 
   - name: start weave containers
-    command: kubectl apply -f /etc/weave/weave.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl apply -f /etc/weave/weave.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     run_once: true
