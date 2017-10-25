@@ -6,9 +6,8 @@ import (
 
 // PackageQuery is a query for finding a package
 type PackageQuery struct {
-	Name       string
-	Version    string
-	AnyVersion bool
+	Name    string
+	Version string
 }
 
 // The PackageCheck uses the operating system to determine whether a
