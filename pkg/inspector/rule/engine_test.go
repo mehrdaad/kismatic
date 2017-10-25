@@ -41,7 +41,7 @@ func TestEngine(t *testing.T) {
 	tests := []struct {
 		mapper          fakeRuleCheckMapper
 		rule            fakeRule
-		ruleWhen        []string
+		ruleWhen        [][]string
 		facts           []string
 		expectedResults []Result
 		expectErr       bool
@@ -87,7 +87,7 @@ func TestEngine(t *testing.T) {
 			rule: fakeRule{
 				name: "FailRule",
 			},
-			ruleWhen: []string{"ubuntu", "worker"},
+			ruleWhen: [][]string{[]string{"ubuntu"}, []string{"worker"}},
 			facts:    []string{"ubuntu", "worker", "otherFact"},
 			expectedResults: []Result{
 				{
@@ -105,7 +105,7 @@ func TestEngine(t *testing.T) {
 			rule: fakeRule{
 				name: "FailRule",
 			},
-			ruleWhen:        []string{"ubuntu"},
+			ruleWhen:        [][]string{[]string{"ubuntu"}},
 			facts:           []string{"otherFact"},
 			expectedResults: []Result{},
 		},
@@ -117,7 +117,7 @@ func TestEngine(t *testing.T) {
 			rule: fakeRule{
 				name: "FailRule",
 			},
-			ruleWhen: []string{},
+			ruleWhen: [][]string{},
 			facts:    []string{"ubuntu"},
 			expectedResults: []Result{
 				{
