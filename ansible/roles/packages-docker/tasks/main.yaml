@@ -1,9 +1,8 @@
 ---
   # YUM
-  - name: install docker-engine yum package
-    yum:
-      name: docker-engine-{{ docker_engine_yum_version }}
-      state: present
+  # Can't use yum module as --setopt=obsoletes=0 is not supported
+  - name: install docker-ce yum package
+    command: yum install -y --setopt=obsoletes=0 docker-ce-{{ docker_ce_yum_version }}
     register: docker_installation_rpm
     until: docker_installation_rpm|success
     retries: 3
@@ -12,11 +11,11 @@
     environment: "{{proxy_env}}"
 
   # DEB
-  - name: install docker-engine deb package
+  - name: install docker-ce deb package
     apt:
-      name: docker-engine={{ docker_engine_apt_version }}
+      name: docker-ce={{ docker_ce_apt_version }}
       state: present
-      default_release: ubuntu-xenial
+      default_release: xenial
     register: docker_installation_deb
     until: docker_installation_deb|success
     retries: 3
