@@ -29,6 +29,11 @@ func NewCmdPlan(in io.Reader, out io.Writer, options *installOpts) *cobra.Comman
 func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile string) error {
 	fmt.Fprintln(out, "Plan your Kubernetes cluster:")
 
+	provisioner, err := util.PromptForString(in, out, "Infrastructure provisioner (optional, leave blank if nodes are already provisioned)", "", install.InfrastructureProvisioners())
+	if err != nil {
+		return fmt.Errorf("Error setting infrastructure provisioner: %v", err)
+	}
+
 	etcdNodes, err := util.PromptForInt(in, out, "Number of etcd nodes", 3)
 	if err != nil {
 		return fmt.Errorf("Error reading number of etcd nodes: %v", err)
@@ -79,6 +84,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 
 	fmt.Fprintln(out)
 	fmt.Fprintf(out, "Generating installation plan file template with: \n")
+	fmt.Fprintf(out, "- %s infrastructure provisioner\n", provisioner)
 	fmt.Fprintf(out, "- %d etcd nodes\n", etcdNodes)
 	fmt.Fprintf(out, "- %d master nodes\n", masterNodes)
 	fmt.Fprintf(out, "- %d worker nodes\n", workerNodes)
@@ -88,12 +94,13 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	fmt.Fprintln(out)
 
 	planTemplate := install.PlanTemplateOptions{
-		EtcdNodes:    etcdNodes,
-		MasterNodes:  masterNodes,
-		WorkerNodes:  workerNodes,
-		IngressNodes: ingressNodes,
-		StorageNodes: storageNodes,
-		NFSVolumes:   nfsVolumes,
+		InfrastructureProvisioner: provisioner,
+		EtcdNodes:                 etcdNodes,
+		MasterNodes:               masterNodes,
+		WorkerNodes:               workerNodes,
+		IngressNodes:              ingressNodes,
+		StorageNodes:              storageNodes,
+		NFSVolumes:                nfsVolumes,
 	}
 	if err = install.WritePlanTemplate(planTemplate, planner); err != nil {
 		return fmt.Errorf("error planning installation: %v", err)

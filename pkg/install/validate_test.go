@@ -1536,3 +1536,311 @@ func TestNodeKubeletOptions(t *testing.T) {
 		}
 	}
 }
+
+var validPlanForProvisioner = Plan{
+	Provisioner: Provisioner{
+		Provider: "aws",
+	},
+	Etcd: NodeGroup{
+		ExpectedCount: 3,
+		Nodes: []Node{
+			{
+				Host:       "${host_1}",
+				IP:         "${ip_1}",
+				InternalIP: "${internalip_1}",
+			},
+			{
+				Host:       "${host_2}",
+				IP:         "${ip_2}",
+				InternalIP: "${internalip_2}",
+			},
+			{
+				Host:       "${host_3}",
+				IP:         "${ip_3}",
+				InternalIP: "${internalip_3}",
+			},
+		},
+	},
+	Master: MasterNodeGroup{
+		ExpectedCount: 3,
+		Nodes: []Node{
+			{
+				Host:       "${host_1}",
+				IP:         "${ip_1}",
+				InternalIP: "${internalip_1}",
+			},
+			{
+				Host:       "${host_2}",
+				IP:         "${ip_2}",
+				InternalIP: "${internalip_2}",
+			},
+			{
+				Host:       "${host_3}",
+				IP:         "${ip_3}",
+				InternalIP: "${internalip_3}",
+			},
+		},
+		LoadBalancedFQDN:      "${load_balanced_fqdn}",
+		LoadBalancedShortName: "${load_balanced_short_name}",
+	},
+	Worker: NodeGroup{
+		ExpectedCount: 2,
+		Nodes: []Node{
+			{
+				Host:       "${host_4}",
+				IP:         "${ip_4}",
+				InternalIP: "${internalip_4}",
+			},
+			{
+				Host:       "${host_5}",
+				IP:         "${ip_5}",
+				InternalIP: "${internalip_5}",
+			},
+		},
+	},
+	Ingress: OptionalNodeGroup{
+		ExpectedCount: 1,
+		Nodes: []Node{
+			{
+				Host:       "${host_4}",
+				IP:         "${ip_4}",
+				InternalIP: "${internalip_4}",
+			},
+		},
+	},
+}
+
+func TestProvisionerPlan(t *testing.T) {
+	valid, err := ValidatePlanForProvisioner(&validPlanForProvisioner)
+	if !valid {
+		t.Errorf("expected valid, but got invalid\n %v", err)
+	}
+}
+
+func TestProvisioner(t *testing.T) {
+	tests := []struct {
+		p     Provisioner
+		valid bool
+	}{
+		{
+			p: Provisioner{
+				Provider: "",
+			},
+			valid: false,
+		},
+		{
+			p: Provisioner{
+				Provider: "foo",
+			},
+			valid: false,
+		},
+		{
+			p: Provisioner{
+				Provider: "aws",
+			},
+			valid: true,
+		},
+	}
+
+	for i, test := range tests {
+		ok, errs := test.p.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t\n %v", i, test.valid, ok, errs)
+		}
+	}
+}
+
+func TestProvisionerNodes(t *testing.T) {
+	tests := []struct {
+		node  provisionerNode
+		valid bool
+	}{
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${host_1}",
+					IP:         "${ip_1}",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: true,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "",
+					IP:         "${ip_1}",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${ip_1}",
+					InternalIP: "",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "hostname",
+					IP:         "10.0.0.1",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "hostname",
+					IP:         "${ip_1}",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${ip_1}",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "10.0.0.1",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${mip_1}",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "10.0.0.1",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${ip_1}",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "10.0.0.1",
+					InternalIP: "${internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${foo_ip_1}",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "10.0.0.1",
+					InternalIP: "${foo_internalip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${foo_internalip_1}",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "10.0.0.1",
+					InternalIP: "${foo_ip_1}",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "${foo_ip_bar}",
+					InternalIP: "10.0.0.1",
+				},
+			},
+			valid: false,
+		},
+		{
+			node: provisionerNode{
+				Node{
+					Host:       "${hostname_1}",
+					IP:         "10.0.0.1",
+					InternalIP: "${foo_internalip_bar}",
+				},
+			},
+			valid: false,
+		},
+	}
+
+	for i, test := range tests {
+		ok, errs := test.node.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t\n %v", i, test.valid, ok, errs)
+		}
+	}
+}

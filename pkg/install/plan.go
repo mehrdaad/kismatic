@@ -29,13 +29,14 @@ const (
 // PlanTemplateOptions contains the options that are desired when generating
 // a plan file template.
 type PlanTemplateOptions struct {
-	EtcdNodes     int
-	MasterNodes   int
-	WorkerNodes   int
-	IngressNodes  int
-	StorageNodes  int
-	NFSVolumes    int
-	AdminPassword string
+	InfrastructureProvisioner string
+	EtcdNodes                 int
+	MasterNodes               int
+	WorkerNodes               int
+	IngressNodes              int
+	StorageNodes              int
+	NFSVolumes                int
+	AdminPassword             string
 }
 
 // PlanReadWriter is capable of reading/writing a Plan
@@ -297,6 +298,17 @@ func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) e
 // template options
 func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p := Plan{}
+	provisioner := Provisioner{
+		Provider: templateOpts.InfrastructureProvisioner,
+	}
+	// set provisioner's provider specific options
+	switch templateOpts.InfrastructureProvisioner {
+	case "aws":
+		provisioner.AWSOptions = &AWSProvisionerOptions{}
+	}
+
+	p.Provisioner = provisioner
+
 	p.Cluster.Name = "kubernetes"
 	p.Cluster.AdminPassword = templateOpts.AdminPassword
 	p.Cluster.DisablePackageInstallation = false

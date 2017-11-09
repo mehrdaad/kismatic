@@ -15,6 +15,10 @@ const (
 	cniProviderCustom = "custom"
 )
 
+func InfrastructureProvisioners() []string {
+	return []string{"aws"}
+}
+
 func packageManagerProviders() []string {
 	return []string{"helm", ""}
 }
@@ -41,6 +45,8 @@ func cloudProviders() []string {
 
 // Plan is the installation plan that the user intends to execute
 type Plan struct {
+	// Infrastructure provisioner
+	Provisioner Provisioner `yaml:"provisioner,omitempty"`
 	// Kubernetes cluster configuration
 	// +required
 	Cluster Cluster
@@ -68,6 +74,19 @@ type Plan struct {
 	Storage OptionalNodeGroup
 	// NFS volumes of the cluster.
 	NFS NFS
+}
+
+type Provisioner struct {
+	// The provider where the infrastructue will be provisioned to.
+	// The provisioner will expect provider specific ENV variables to be set.
+	// Options: aws
+	Provider   string
+	AWSOptions *AWSProvisionerOptions `yaml:"options,omitempty"`
+}
+
+// AWSProvisionerOptions contains specific options used when provisioning infrastructue
+// TODO determine what those are
+type AWSProvisionerOptions struct {
 }
 
 // Cluster describes a Kubernetes cluster
