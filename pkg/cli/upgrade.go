@@ -235,6 +235,13 @@ without the "--partial-ok" flag to perform a full upgrade.
 		}
 	}
 
+	// Generate dashboard admin certificate
+	util.PrintHeader(out, "Generating Dashboard Admin Kubeconfig File", '=')
+	if err := generateDashboardAdminKubeconfig(out, opts.generatedAssetsDir, *plan); err != nil {
+		return err
+	}
+	util.PrettyPrintOk(out, "Generated dashboard admin kubeconfig file in the %q directory", opts.generatedAssetsDir)
+
 	if !opts.dryRun {
 		fmt.Fprintln(out)
 		util.PrintColor(out, util.Green, "The cluster was upgraded successfully!\n")

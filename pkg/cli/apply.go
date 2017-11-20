@@ -1,9 +1,14 @@
 package cli
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -119,6 +124,13 @@ func (c *applyCmd) run() error {
 		}
 	}
 
+	// Generate dashboard admin certificate
+	util.PrintHeader(c.out, "Generating Dashboard Admin Kubeconfig File", '=')
+	if err := generateDashboardAdminKubeconfig(c.out, c.generatedAssetsDir, *plan); err != nil {
+		return err
+	}
+	util.PrettyPrintOk(c.out, "Generated dashboard admin kubeconfig file in the %q directory", c.generatedAssetsDir)
+
 	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n")
 	fmt.Fprintln(c.out)
 
@@ -130,5 +142,48 @@ func (c *applyCmd) run() error {
 	util.PrintColor(c.out, util.Blue, "- To SSH into a cluster node: \"./kismatic ssh etcd|master|worker|storage|$node.host\"\n")
 	fmt.Fprintln(c.out)
 
+	return nil
+}
+
+func generateDashboardAdminKubeconfig(out io.Writer, generatedAssetsDir string, plan install.Plan) error {
+	// All of this is required because cannot set a label on the secret so no selectors
+	var secretsb bytes.Buffer
+	cmdOut := bufio.NewWriter(&secretsb)
+	cmd := exec.Command("./kubectl", "-n", "kube-system", "get", "secret", "-o", "custom-columns=NAME:.metadata.name", "--kubeconfig", filepath.Join(generatedAssetsDir, "kubeconfig"))
+	cmd.Stdout = cmdOut
+	cmd.Stderr = out
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error getting a list of tokens: %v", err)
+	}
+	secrets := strings.Split(secretsb.String(), "\n")
+	if len(secrets) == 0 {
+		return fmt.Errorf("error getting a list of tokens")
+	}
+	var secret string
+	for _, t := range secrets {
+		if strings.Contains(t, "kubernetes-dashboard-admin-token") {
+			secret = t
+			break
+		}
+	}
+	if len(secret) == 0 {
+		return fmt.Errorf("kubernetes-dashboard-admin-token secret not found")
+	}
+	var tokenb bytes.Buffer
+	cmdOut = bufio.NewWriter(&tokenb)
+	cmd = exec.Command("./kubectl", "-n", "kube-system", "get", "secrets", secret, "-o", "jsonpath='{.data.token}'", "--kubeconfig", filepath.Join(generatedAssetsDir, "kubeconfig"))
+	cmd.Stdout = cmdOut
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error getting the token: %v", err)
+	}
+	if len(tokenb.String()) == 0 {
+		return fmt.Errorf("got an empty token")
+	}
+	err = install.GenerateDashboardAdminKubeconfig(strings.Trim(tokenb.String(), "'"), &plan, generatedAssetsDir)
+	if err != nil {
+		return fmt.Errorf("error generating dashboard-admin kubeconfig file: %v", err)
+	}
 	return nil
 }
