@@ -35,14 +35,18 @@ resource "aws_vpc" "kismatic" {
   enable_dns_support    = true
   enable_dns_hostnames  = true
   tags {
-    Name = "kismatic - cluster"
+    Name = "kismatic/${var.cluster_name}"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
   }
 }
 
 resource "aws_internet_gateway" "kismatic_gateway" {
   vpc_id = "${aws_vpc.kismatic.id}"
   tags {
-    Name = "kismatic - cluster"
+    Name = "kismatic/${var.cluster_name}"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
   }
 }
 
@@ -55,7 +59,9 @@ resource "aws_default_route_table" "kismatic_router" {
   }
 
   tags {
-    Name = "kismatic - cluster"
+    Name = "kismatic/${var.cluster_name}"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
   }
 }
 
@@ -64,6 +70,11 @@ resource "aws_subnet" "kismatic_public" {
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.1.0/24"
   map_public_ip_on_launch = "True"
+  tags {
+    Name = "kismatic/${var.cluster_name}"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+  }
 }
 
 resource "aws_subnet" "kismatic_private" {
@@ -71,10 +82,15 @@ resource "aws_subnet" "kismatic_private" {
   cidr_block  = "10.0.2.0/24"
   map_public_ip_on_launch = "True"
   #This needs to be false eventually
+  tags {
+    Name = "kismatic/${var.cluster_name}"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+  }
 }
 
 resource "aws_security_group" "kismatic_sec_group" {
-  name        = "kismatic - cluster"
+  name        = "${var.cluster_name}"
   description = "Allow inbound SSH for kismatic, and all communication between nodes."
   vpc_id      = "${aws_vpc.kismatic.id}"
 
@@ -114,121 +130,138 @@ resource "aws_security_group" "kismatic_sec_group" {
   }
 
   tags {
-    Name = "kismatic"
+    Name = "kismatic/${var.cluster_name}"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
   }
 }
 
 resource "aws_instance" "master" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.master_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  vpc_security_group_ids  = ["${aws_security_group.kismatic_sec_group.id}"]
+  subnet_id               = "${aws_subnet.kismatic_public.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.master_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
   tags {
-    Name = "kismatic - master"
+    Name = "kismatic/${var.cluster_name}/master"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+    Roles = "master"
   }
 
-    provisioner "remote-exec" {
-      inline = ["echo ready"]
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
 
-      connection {
-        type = "ssh"
-        user = "ubuntu"
-        private_key = "${file("${var.private_ssh_key_path}")}"
-        timeout = "2m"
-      }
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
+  }
 }
 
 resource "aws_instance" "etcd" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.etcd_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  vpc_security_group_ids  = ["${aws_security_group.kismatic_sec_group.id}"]
+  subnet_id               = "${aws_subnet.kismatic_public.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.etcd_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
   tags {
-    Name = "kismatic - etcd"
+    Name = "kismatic/${var.cluster_name}/etcd"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+    Roles = "etcd"
   }
 
   provisioner "remote-exec" {
-      inline = ["echo ready"]
+    inline = ["echo ready"]
 
-      connection {
-        type = "ssh"
-        user = "ubuntu"
-        private_key = "${file("${var.private_ssh_key_path}")}"
-        timeout = "2m"
-      }
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
+  }
 }
 
 resource "aws_instance" "worker" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.worker_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  vpc_security_group_ids  = ["${aws_security_group.kismatic_sec_group.id}"]
+  subnet_id               = "${aws_subnet.kismatic_public.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.worker_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
   tags {
-    Name = "kismatic - worker"
+    Name = "kismatic/${var.cluster_name}/worker"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+    Roles = "worker"
   }
 
   provisioner "remote-exec" {
-      inline = ["echo ready"]
+    inline = ["echo ready"]
 
-      connection {
-        type = "ssh"
-        user = "ubuntu"
-        private_key = "${file("${var.private_ssh_key_path}")}"
-        timeout = "2m"
-      }
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
+  }
 }
 
 resource "aws_instance" "ingress" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.ingress_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  vpc_security_group_ids  = ["${aws_security_group.kismatic_sec_group.id}"]
+  subnet_id               = "${aws_subnet.kismatic_public.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.ingress_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
   tags {
-    Name = "kismatic - ingress"
+    Name = "kismatic/${var.cluster_name}/ingress"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+    Roles = "ingress"
   }
 
   provisioner "remote-exec" {
-      inline = ["echo ready"]
+    inline = ["echo ready"]
 
-      connection {
-        type = "ssh"
-        user = "ubuntu"
-        private_key = "${file("${var.private_ssh_key_path}")}"
-        timeout = "2m"
-      }
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
+  }
 }
 
 resource "aws_instance" "storage" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.storage_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  vpc_security_group_ids  = ["${aws_security_group.kismatic_sec_group.id}"]
+  subnet_id               = "${aws_subnet.kismatic_public.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.storage_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
   tags {
-    Name = "kismatic - storage"
+    Name = "kismatic/${var.cluster_name}/storage"
+    ClusterID = "${var.cluster_name}"
+    Owner = "${var.cluster_owner}"
+    Roles = "storage"
   }
 
   provisioner "remote-exec" {
-      inline = ["echo ready"]
+    inline = ["echo ready"]
 
-      connection {
-        type = "ssh"
-        user = "ubuntu"
-        private_key = "${file("${var.private_ssh_key_path}")}"
-        timeout = "2m"
-      }
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
+  }
 }
