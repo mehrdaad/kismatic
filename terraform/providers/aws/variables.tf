@@ -20,7 +20,7 @@ variable "public_ssh_key_path" {
 }
 
 variable "ssh_user" {
-  default = "root"
+  default = "roo1"
   //These will have to change when we want to also support RHEL/CentOS
 }
 
@@ -58,10 +58,10 @@ variable worker_count {
 
 variable ingress_count {
   description = "Number of k8s ingress nodes"
-  default     = 0
+  default     = 1
 }
 
 variable storage_count {
   description = "Number of k8s storage nodes"
-  default     = 0
+  default     = 1
 }
