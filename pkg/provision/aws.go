@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 
 	"github.com/apprenda/kismatic/pkg/install"
@@ -36,12 +35,6 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	cmdDir := clusterStateDir
 	providerDir := fmt.Sprintf("../../providers/%s", plan.Provisioner.Provider)
 
-	//Get the user's name for cluster tagging
-	user, err := user.Current()
-	if err != nil {
-		return nil, err
-	}
-
 	// Generate SSH keypair
 	absPath, err := os.Getwd()
 	if err != nil {
@@ -58,7 +51,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	data := AWSTerraformData{
 		Region:            plan.Provisioner.AWSOptions.Region,
 		ClusterName:       plan.Cluster.Name,
-		ClusterOwner:      user.Username,
+		ClusterOwner:      aws.Terraform.Owner,
 		MasterCount:       plan.Master.ExpectedCount,
 		EtcdCount:         plan.Etcd.ExpectedCount,
 		WorkerCount:       plan.Worker.ExpectedCount,

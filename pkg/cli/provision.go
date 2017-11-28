@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"path/filepath"
 
 	"github.com/apprenda/kismatic/pkg/install"
@@ -27,9 +28,15 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 			if err != nil {
 				return err
 			}
+			//Get the user's name for cluster tagging
+			user, err := user.Current()
+			if err != nil {
+				return err
+			}
 			tf := provision.Terraform{
 				Output:     out,
 				BinaryPath: filepath.Join(path, "terraform/bin/terraform"),
+				Owner:      user.Username,
 			}
 			switch plan.Provisioner.Provider {
 			case "aws":

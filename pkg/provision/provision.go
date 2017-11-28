@@ -18,6 +18,7 @@ const terraformBinaryPath = "../../bin/terraform"
 type Terraform struct {
 	Output     io.Writer
 	BinaryPath string
+	Owner      string
 	Logger     *log.Logger
 }
 

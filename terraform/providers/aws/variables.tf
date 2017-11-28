@@ -20,8 +20,7 @@ variable "public_ssh_key_path" {
 }
 
 variable "ssh_user" {
-  default = "root"
-  //These will have to change when we want to also support RHEL/CentOS
+  default = ""
 }
 
 variable "cluster_name" {
