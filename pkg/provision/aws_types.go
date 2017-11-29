@@ -9,6 +9,8 @@ type AWS struct {
 
 // AWSTerraformData provider for creating and destroying infrastructure on AWS
 type AWSTerraformData struct {
+	Owner             string `json:"owner,omitempty"`
+	Version           string `json:"version"`
 	Region            string `json:"region,omitempty"`
 	PrivateSSHKeyPath string `json:"private_ssh_key_path"`
 	PublicSSHKeyPath  string `json:"public_ssh_key_path"`

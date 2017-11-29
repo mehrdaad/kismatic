@@ -23,6 +23,10 @@ variable "ssh_user" {
   default = ""
 }
 
+variable "version" {
+  default = ""
+}
+
 variable "cluster_name" {
   default = "kismatic-cluster"
 }

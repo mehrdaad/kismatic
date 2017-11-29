@@ -18,7 +18,6 @@ const terraformBinaryPath = "../../bin/terraform"
 type Terraform struct {
 	Output     io.Writer
 	BinaryPath string
-	Owner      string
 	Logger     *log.Logger
 }
 
@@ -44,6 +43,10 @@ type tfOutputVar struct {
 type Provisioner interface {
 	Provision(install.Plan) (*install.Plan, error)
 	Destroy(clusterName string) error
+}
+
+func (tf Terraform) getLoadBalancer(clusterName, lbName string) (string, error) {
+
 }
 
 func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, error) {
