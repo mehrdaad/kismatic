@@ -34,9 +34,10 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 				return err
 			}
 			tf := provision.Terraform{
-				Output:     out,
-				BinaryPath: filepath.Join(path, "terraform/bin/terraform"),
-				Owner:      user.Username,
+				Output:          out,
+				BinaryPath:      filepath.Join(path, "terraform/bin/terraform"),
+				ClusterOwner:    user.Username,
+				KismaticVersion: install.KismaticVersion,
 			}
 			switch plan.Provisioner.Provider {
 			case "aws":
