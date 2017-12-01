@@ -120,7 +120,7 @@ func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
 		ExpectedCount: masterNodes.ExpectedCount,
 		Nodes:         masterNodes.Nodes,
 	}
-	if masterNodes.ExpectedCount > 1 {
+	if mng.ExpectedCount > 1 {
 		mlb, err := aws.getLoadBalancer(plan.Cluster.Name, "master")
 		if err != nil {
 			return nil, err
@@ -128,8 +128,8 @@ func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
 		mng.LoadBalancedFQDN = mlb
 		mng.LoadBalancedShortName = mlb
 	} else {
-		mng.LoadBalancedFQDN = mng.Nodes[0].InternalIP
-		mng.LoadBalancedShortName = mng.Nodes[0].InternalIP
+		mng.LoadBalancedFQDN = mng.Nodes[0].IP
+		mng.LoadBalancedShortName = mng.Nodes[0].IP
 	}
 	plan.Master = mng
 
